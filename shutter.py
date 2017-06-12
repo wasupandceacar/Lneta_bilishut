@@ -1,6 +1,8 @@
 import requests
 import re
 import json
+import traceback
+from threading import Thread
 
 s = requests.Session()
 
@@ -20,25 +22,44 @@ BILI_HEADERS = {
 
 BILI_URL = 'http://www.bilibili.com/video/av'
 
+#搜索到的Lneta数
 num=0
 
 lnetas=[]
+
+#开始的av号-1
+start=1000000
+
+#线程数
+tnum=0
+
+class MyThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+
+    def run(self):
+        for i in range(start+100000*tnum+1, start+100000*tnum+100001):
+            try:
+                pull(i)
+            except:
+                print(i)
+                traceback.print_exc()
+                continue
+        pass
 
 def shut(av):
     pull(av)
 
 def pull(av):
-    print(av)
     url=BILI_URL+str(av)
+    print(av)
     data = s.get(url, headers=BILI_HEADERS).content
     #open(PATH, 'wb').write(data)
     ddata=data.decode('utf-8')
     titlelist = re.compile('h1 title="(.*?)">')
     title = re.findall(titlelist, ddata)
     #检验视频是否存在
-    if len(title)==0:
-        print("视频不存在")
-    else:
+    if len(title)!=0:
         taglist = re.compile('<a class="tag-val" href=".*?title="(.*?)" target="_blank"')
         tags = re.findall(taglist, ddata)
         title=title[0]
@@ -51,7 +72,7 @@ def pull(av):
         if isTouhou(title, tags, comment):
             if isLunatic(title, tags, comment):
                 if isNeta(title, tags, comment):
-                    print("是啊")
+                    print(str(av)+"  是啊")
                     global num
                     num+=1
                     lneta={}
@@ -74,12 +95,6 @@ def pull(av):
                     lneta['type'] = ""
                     lneta['comment'] = comment
                     lnetas.append(lneta)
-                else:
-                    print("非neta")
-            else:
-                print("非L难度")
-        else:
-            print("非东方")
 
 #判断是否东方相关
 def isTouhou(title, tags, comment):
@@ -143,8 +158,16 @@ def washComment(msg):
     return dr.sub('', msg)
 
 if __name__=="__main__":
-    for i in range(1, 500001):
-        pull(i)
+    threads=[]
+    global tnum
+    for i in range(30):
+        thread=MyThread()
+        threads.append(thread)
+    for i in range(len(threads)):
+        tnum=i
+        threads[i].start()
+    for thread in threads:
+        thread.join()
     print("有"+str(num)+"个Lneta")
     jdata = json.dumps(lnetas, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
     f = open(PATH, 'w')
