@@ -177,7 +177,7 @@ def pullignore(av):
         taglist = re.compile('<a class="tag-val" href=".*?title="(.*?)" target="_blank"')
         tags = re.findall(taglist, ddata)
         title=title[0]
-        commentlist = re.compile('v_desc">(.*?)</div>', re.S)
+        commentlist = re.compile('data-desc="0">(.*?)</div>', re.S)
         comment=re.findall(commentlist, ddata)
         if len(comment)==0:
             comment=""
@@ -292,12 +292,8 @@ if __name__=="__main__":
                     traceback.print_exc()
                     continue
     pullavs()'''
-    pullignore(2350958)
-    pullignore(10306723)
-    pullignore(10684206)
-    pullignore(10812027)
-    pullignore(10812543)
-    pullignore(11129763)
+    pullignore(13598309)
+    pullignore(13612610)
     print("有"+str(num)+"个Lneta")
     jdata = json.dumps(lnetas, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
     f = open(PATH, 'w',encoding='utf-8')
