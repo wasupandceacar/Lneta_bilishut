@@ -4,12 +4,15 @@ import urllib
 import json
 import traceback
 from threading import Thread
+import pymysql
 
 s = requests.Session()
 
 PATH="tmp.json"
 
 HTMLPATH="F:/1.html"
+
+JSONPATH="1.json"
 
 THkey=['红魔乡','妖妖梦','永夜抄','风神录','地灵殿','星莲船','神灵庙','辉针城','绀珠传']
 
@@ -165,7 +168,7 @@ def pull(av):
     else:
         print(str(av)+" 不存在")
 
-def pullignore(av):
+def pullignore(av, work, type):
     url=BILI_URL+str(av)
     data = s.get(url, headers=BILI_HEADERS).content
     #open(HTMLPATH, 'wb').write(data)
@@ -202,12 +205,59 @@ def pullignore(av):
         else:
             time = time[0]
         lneta['time'] = time
-        lneta['work'] = ""
-        lneta['type'] = ""
+        lneta['work'] = work
+        lneta['type'] = type
         lneta['comment'] = comment
+        lneta['chara']=''
         lnetas.append(lneta)
     else:
         print(str(av)+" 不存在")
+
+def pullignorewithchara(av, work, type, chara):
+    url = BILI_URL + str(av)
+    data = s.get(url, headers=BILI_HEADERS).content
+    # open(HTMLPATH, 'wb').write(data)
+    ddata = data.decode('utf-8')
+    titlelist = re.compile('h1 title="(.*?)">')
+    title = re.findall(titlelist, ddata)
+    # 检验视频是否存在
+    if len(title) != 0:
+        taglist = re.compile('<a class="tag-val" href=".*?title="(.*?)" target="_blank"')
+        tags = re.findall(taglist, ddata)
+        title = title[0]
+        commentlist = re.compile('data-desc="0">(.*?)</div>', re.S)
+        comment = re.findall(commentlist, ddata)
+        if len(comment) == 0:
+            comment = ""
+        else:
+            comment = washComment(comment[0])
+        print(str(av) + " Lneta")
+        global num
+        num += 1
+        lneta = {}
+        lneta['av'] = av
+        namelist = re.compile('author" content="(.*?)"')
+        name = re.findall(namelist, ddata)
+        if len(name) == 0:
+            name = ""
+        else:
+            name = name[0]
+        lneta['name'] = name
+        timelist = re.compile('datetime=".*?"><i>(.*?)</i>')
+        time = re.findall(timelist, ddata)
+        if len(time) == 0:
+            time = ""
+        else:
+            time = time[0]
+        lneta['time'] = time
+        lneta['work'] = work
+        lneta['type'] = type
+        lneta['chara'] = chara
+        lneta['comment'] = comment
+        lnetas.append(lneta)
+    else:
+        print(str(av) + " 不存在")
+
 
 #判断是否东方相关
 def isTouhou(title, tags, comment):
@@ -279,6 +329,36 @@ def washLComment(msg):
         lo=lo.replace(key, '')
     return lo
 
+def loadJson():
+    f = open(JSONPATH, 'r', encoding='utf-8')
+    str=f.readline()
+    f.close()
+    jstr=json.loads(str, encoding='utf-8')
+    return jstr
+
+def writeToDB(jstr):
+    for jss in jstr:
+        db = pymysql.connect("138.68.57.30", "jishen", "jishen", "lneta" ,use_unicode=True, charset="utf8")
+        cursor = db.cursor()
+        sql=''
+        if jss['chara']=='':
+            sql = """INSERT INTO lneta_info
+                      (av, comment, name, time, type, work)
+                      VALUES ("%d", "%s", "%s" ,"%s", "%s" ,"%s")""" % (jss['av'], jss['comment'], jss['name'], jss['time'], jss['type'], jss['work'])
+        else:
+            sql = """INSERT INTO lneta_info
+                                  (av, comment, name, time, type, work, chara)
+                                  VALUES ("%d", "%s", "%s" ,"%s", "%s" ,"%s", "%s")""" % (
+            jss['av'], jss['comment'], jss['name'], jss['time'], jss['type'], jss['work'], jss['chara'])
+        try:
+            cursor.execute(sql)
+            db.commit()
+            print("s")
+        except:
+            db.rollback()
+            print(str(jss['av'])+"f")
+        db.close()
+
 if __name__=="__main__":
     '''knum=0
     for key1 in THkey:
@@ -292,10 +372,7 @@ if __name__=="__main__":
                     traceback.print_exc()
                     continue
     pullavs()'''
-    pullignore(13598309)
-    pullignore(13612610)
+    pullignorewithchara(16276619, '风神录', 'NB', '梦B')
     print("有"+str(num)+"个Lneta")
-    jdata = json.dumps(lnetas, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
-    f = open(PATH, 'w',encoding='utf-8')
-    f.write(jdata)
-    f.close()
+    jdata = json.dumps(lnetas, ensure_ascii=False, sort_keys=True)
+    writeToDB(json.loads(jdata))
