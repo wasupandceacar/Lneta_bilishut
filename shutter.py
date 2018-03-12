@@ -131,7 +131,7 @@ def pull(av):
         taglist = re.compile('<a class="tag-val" href=".*?title="(.*?)" target="_blank"')
         tags = re.findall(taglist, ddata)
         title=title[0]
-        commentlist = re.compile('v_desc">(.*?)</div>', re.S)
+        commentlist = re.compile('<div class="info open">(.*?)</div>', re.S)
         comment=re.findall(commentlist, ddata)
         if len(comment)==0:
             comment=""
@@ -154,7 +154,7 @@ def pull(av):
                     else:
                         name=name[0]
                     lneta['name'] = name
-                    timelist = re.compile('datetime=".*?"><i>(.*?)</i>')
+                    timelist = re.compile('<time>(.*?)</time>')
                     time = re.findall(timelist, ddata)
                     if len(time)==0:
                         time=""
@@ -180,7 +180,7 @@ def pullignore(av, work, type):
         taglist = re.compile('<a class="tag-val" href=".*?title="(.*?)" target="_blank"')
         tags = re.findall(taglist, ddata)
         title=title[0]
-        commentlist = re.compile('data-desc="0">(.*?)</div>', re.S)
+        commentlist = re.compile('<div class="info open">(.*?)</div>', re.S)
         comment=re.findall(commentlist, ddata)
         if len(comment)==0:
             comment=""
@@ -198,7 +198,7 @@ def pullignore(av, work, type):
         else:
             name = name[0]
         lneta['name'] = name
-        timelist = re.compile('datetime=".*?"><i>(.*?)</i>')
+        timelist = re.compile('<time>(.*?)</time>')
         time = re.findall(timelist, ddata)
         if len(time) == 0:
             time = ""
@@ -338,7 +338,7 @@ def loadJson():
 
 def writeToDB(jstr):
     for jss in jstr:
-        db = pymysql.connect("138.68.57.30", "jishen", "jishen", "lneta" ,use_unicode=True, charset="utf8")
+        db = pymysql.connect("159.89.142.49", "jishen", "jishen", "lneta" ,use_unicode=True, charset="utf8")
         cursor = db.cursor()
         sql=''
         if jss['chara']=='':
@@ -372,7 +372,7 @@ if __name__=="__main__":
                     traceback.print_exc()
                     continue
     pullavs()'''
-    pullignorewithchara(16276619, '风神录', 'NB', '梦B')
+    pullignore(20703633, '星莲船', 'NM')
     print("有"+str(num)+"个Lneta")
     jdata = json.dumps(lnetas, ensure_ascii=False, sort_keys=True)
     writeToDB(json.loads(jdata))
