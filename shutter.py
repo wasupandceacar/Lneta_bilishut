@@ -11,7 +11,7 @@ s = requests.Session()
 PATH="tmp.json"
 
 HTMLPATH="F:/1.html"
-
+ 
 JSONPATH="1.json"
 
 THkey=['红魔乡','妖妖梦','永夜抄','风神录','地灵殿','星莲船','神灵庙','辉针城','绀珠传']
@@ -123,7 +123,7 @@ def pull(av):
     url=BILI_URL+str(av)
     data = s.get(url, headers=BILI_HEADERS).content
     #open(HTMLPATH, 'wb').write(data)
-    ddata=data.decode('utf-8')
+    ddata=replaceEnter(data).decode('utf-8')
     titlelist = re.compile('h1 title="(.*?)">')
     title = re.findall(titlelist, ddata)
     #检验视频是否存在
@@ -172,7 +172,7 @@ def pullignore(av, work, type):
     url=BILI_URL+str(av)
     data = s.get(url, headers=BILI_HEADERS).content
     #open(HTMLPATH, 'wb').write(data)
-    ddata=data.decode('utf-8')
+    ddata=replaceEnter(data).decode('utf-8')
     titlelist = re.compile('h1 title="(.*?)">')
     title = re.findall(titlelist, ddata)
     #检验视频是否存在
@@ -198,7 +198,9 @@ def pullignore(av, work, type):
         else:
             name = name[0]
         lneta['name'] = name
-        timelist = re.compile('<time>(.*?)</time>')
+        #timelist = re.compile('<time>(.*?)</time>')
+        # 暂时方法
+        timelist = re.compile('单机游戏</a></span><span>(.*?)</span><!---->')
         time = re.findall(timelist, ddata)
         if len(time) == 0:
             time = ""
@@ -217,7 +219,7 @@ def pullignorewithchara(av, work, type, chara):
     url = BILI_URL + str(av)
     data = s.get(url, headers=BILI_HEADERS).content
     # open(HTMLPATH, 'wb').write(data)
-    ddata = data.decode('utf-8')
+    ddata = replaceEnter(data).decode('utf-8')
     titlelist = re.compile('h1 title="(.*?)">')
     title = re.findall(titlelist, ddata)
     # 检验视频是否存在
@@ -258,6 +260,12 @@ def pullignorewithchara(av, work, type, chara):
     else:
         print(str(av) + " 不存在")
 
+def replaceEnter(b):
+    ib = []
+    for tb in b:
+        if 13 != tb:
+            ib.append(tb)
+    return bytes(ib)
 
 #判断是否东方相关
 def isTouhou(title, tags, comment):
@@ -338,7 +346,7 @@ def loadJson():
 
 def writeToDB(jstr):
     for jss in jstr:
-        db = pymysql.connect("159.89.142.49", "jishen", "jishen", "lneta" ,use_unicode=True, charset="utf8")
+        db = pymysql.connect("104.248.191.0", "jishen", "jishen", "lneta" ,use_unicode=True, charset="utf8")
         cursor = db.cursor()
         sql=''
         if jss['chara']=='':
@@ -372,7 +380,13 @@ if __name__=="__main__":
                     traceback.print_exc()
                     continue
     pullavs()'''
-    pullignore(20703633, '星莲船', 'NM')
+    pullignore(46947112, '神灵庙', 'NBNT')
+    pullignore(46813417, '永夜抄', 'NB')
+    pullignore(46796494, '辉针城', 'NB')
+    pullignore(46696767, '妖妖梦', 'NBNR')
+    pullignore(45528492, '妖妖梦', 'NBNR')
+    pullignore(46565244, '红魔乡', 'NB')
+    pullignore(47006624, '红魔乡', 'NB')
     print("有"+str(num)+"个Lneta")
     jdata = json.dumps(lnetas, ensure_ascii=False, sort_keys=True)
     writeToDB(json.loads(jdata))
